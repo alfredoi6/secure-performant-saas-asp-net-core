@@ -1,6 +1,8 @@
 ﻿using Web.Data;
 using Web.Models;
 
+namespace Web.Services;
+
 public class TenantService : ITenantService
 {
 	// You can inject EF DbContext, other microservices, etc.

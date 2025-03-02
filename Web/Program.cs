@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Factories;
+using Web.Managers;
+using Web.Services;
 
 namespace Web
 {
@@ -34,17 +36,18 @@ namespace Web
 			// AddDefaultIdentity sets up basic ASP.NET Core Identity features
 			// for IdentityUser, without role support. We also configure the
 			// account confirmation requirement for sign-in.
-			builder.Services.AddDefaultIdentity<IdentityUser>(options =>
-			{
-				options.SignIn.RequireConfirmedAccount = true;
-			})
+			builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+				{
+					options.SignIn.RequireConfirmedAccount = true;
+				})
 			// Register our custom claims principal factory. This replaces
 			// the default claims factory with one that can enrich user
 			// identities with tenant-specific claims.
 			.AddClaimsPrincipalFactory<TenantUserClaimsPrincipalFactory>()
 			// Link the Identity system to the EF Core context for storing and
 			// retrieving identity data (users, passwords, etc.).
-			.AddEntityFrameworkStores<ApplicationDbContext>();
+			.AddEntityFrameworkStores<ApplicationDbContext>()
+				.AddDefaultUI();
 
 
 			// --------------------------------------------------------------
@@ -64,7 +67,7 @@ namespace Web
 			});
 
 			// Configure the TempData cookie. By default, ASP.NET uses
-			// .AspNetCore.Mvc.CookieTempDataProvider — renaming it further
+			// .AspNetCore.Mvc.CookieTempDataProvider ï¿½ renaming it further
 			// obscures the tech stack signature.
 			builder.Services.AddControllersWithViews()
 				.AddCookieTempDataProvider(options =>
@@ -72,7 +75,7 @@ namespace Web
 					options.Cookie.Name = "i6TempDataCookie";
 				});
 
-
+			builder.Services.AddRazorPages();
 			// --------------------------------------------------------------
 			// 4. Application Services
 			// --------------------------------------------------------------
@@ -80,6 +83,12 @@ namespace Web
 			// tenant info from the database). We register it so our
 			// custom claims principal factory can inject and use it.
 			builder.Services.AddScoped<ITenantService, TenantService>();
+
+			builder.Services.AddScoped<UserManager<ApplicationUser>>(provider => 
+				provider.GetRequiredService<StripeUserManager>());
+			builder.Services.AddScoped<StripeUserManager>();
+			
+			builder.Services.AddScoped<IStripeIntegrationService, StripeIntegrationService>();
 
 
 			// --------------------------------------------------------------
@@ -130,7 +139,25 @@ namespace Web
 				.WithStaticAssets();
 			app.MapRazorPages()
 				.WithStaticAssets();
-
+			// --------------------------------------------------------------
+			// 7. Apply Database Migrations Automatically
+			// --------------------------------------------------------------
+			using (var scope = app.Services.CreateScope())
+			{
+				var services = scope.ServiceProvider;
+				try
+				{
+					var dbContext = services.GetRequiredService<ApplicationDbContext>();
+					dbContext.Database.Migrate(); // Apply pending migrations automatically
+				}
+				catch (Exception ex)
+				{
+					var logger = services.GetRequiredService<ILogger<Program>>();
+					logger.LogError(ex, "An error occurred while applying database migrations.");
+					throw; // Ensure the error is logged and doesn't go unnoticed
+				}
+			}
+			
 			// --------------------------------------------------------------
 			// 7. Start the Application
 			// --------------------------------------------------------------

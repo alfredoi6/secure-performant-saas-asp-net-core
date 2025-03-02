@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Web.Data;
 
 namespace Web.Factories;
 
@@ -18,7 +19,7 @@ namespace Web.Factories;
 /// method to include default Identity claims (like username), then
 /// enrich those claims with the tenant data returned by the service.
 /// </summary>
-public class TenantUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<IdentityUser>
+public class TenantUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<ApplicationUser>
 {
 	private readonly ITenantService _tenantService;
 
@@ -37,7 +38,7 @@ public class TenantUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<Ident
 	/// Custom service for fetching tenant data (e.g., from a database or external API).
 	/// </param>
 	public TenantUserClaimsPrincipalFactory(
-		UserManager<IdentityUser> userManager,
+		UserManager<ApplicationUser> userManager,
 		IOptions<IdentityOptions> optionsAccessor,
 		ITenantService tenantService)
 		: base(userManager, optionsAccessor)
@@ -52,7 +53,7 @@ public class TenantUserClaimsPrincipalFactory : UserClaimsPrincipalFactory<Ident
 	/// </summary>
 	/// <param name="user">The <see cref="IdentityUser"/> for whom claims are generated.</param>
 	/// <returns>A <see cref="ClaimsIdentity"/> containing both default and tenant-specific claims.</returns>
-	protected override async Task<ClaimsIdentity> GenerateClaimsAsync(IdentityUser user)
+	protected override async Task<ClaimsIdentity> GenerateClaimsAsync(ApplicationUser user)
 	{
 		// 1. Retrieve the base Identity claims (e.g., Name, UserId).
 		var identity = await base.GenerateClaimsAsync(user);
