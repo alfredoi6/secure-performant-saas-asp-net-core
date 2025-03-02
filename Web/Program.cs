@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
 using Web.Factories;
@@ -29,7 +30,6 @@ namespace Web
 			// Show detailed database errors (e.g., migrations) during development.
 			builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-
 			// --------------------------------------------------------------
 			// 2. Identity Configuration
 			// --------------------------------------------------------------
@@ -40,14 +40,15 @@ namespace Web
 				{
 					options.SignIn.RequireConfirmedAccount = true;
 				})
+				
+				.AddDefaultTokenProviders()
 			// Register our custom claims principal factory. This replaces
 			// the default claims factory with one that can enrich user
 			// identities with tenant-specific claims.
 			.AddClaimsPrincipalFactory<TenantUserClaimsPrincipalFactory>()
 			// Link the Identity system to the EF Core context for storing and
 			// retrieving identity data (users, passwords, etc.).
-			.AddEntityFrameworkStores<ApplicationDbContext>()
-				.AddDefaultUI();
+			.AddEntityFrameworkStores<ApplicationDbContext>();
 
 
 			// --------------------------------------------------------------
@@ -84,11 +85,11 @@ namespace Web
 			// custom claims principal factory can inject and use it.
 			builder.Services.AddScoped<ITenantService, TenantService>();
 
-			builder.Services.AddScoped<UserManager<ApplicationUser>>(provider => 
-				provider.GetRequiredService<StripeUserManager>());
-			builder.Services.AddScoped<StripeUserManager>();
-			
+			builder.Services.AddScoped<StripeUserManager>(); // Keep this
+			builder.Services.AddScoped<UserManager<ApplicationUser>, StripeUserManager>(); // Explicit replacement
 			builder.Services.AddScoped<IStripeIntegrationService, StripeIntegrationService>();
+			builder.Services.AddTransient<IEmailSender, PapercutEmailSenderService>();
+
 
 
 			// --------------------------------------------------------------

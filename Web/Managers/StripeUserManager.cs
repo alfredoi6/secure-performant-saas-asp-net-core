@@ -29,30 +29,17 @@ public class StripeUserManager : UserManager<ApplicationUser>
 
     public override async Task<IdentityResult> CreateAsync(ApplicationUser user, string password)
     {
+        string stripeCustomerId = _stripeIntegrationService.RegisterNewStripeUser(user.Email);
+        user.StripeCustomerId = stripeCustomerId;
         var result = await base.CreateAsync(user, password);
-        if (result.Succeeded)
-        {
-            // Register the user in Stripe
-            string stripeCustomerId = _stripeIntegrationService.RegisterNewStripeUser(user.Email);
-            
-            // Update user record with StripeCustomerId
-            user.StripeCustomerId = stripeCustomerId;
-            _dbContext.Users.Update(user);
-            await _dbContext.SaveChangesAsync();
-        }
         return result;
     }
 
     public override async Task<IdentityResult> CreateAsync(ApplicationUser user)
     {
+        string stripeCustomerId = _stripeIntegrationService.RegisterNewStripeUser(user.Email);
+        user.StripeCustomerId = stripeCustomerId;
         var result = await base.CreateAsync(user);
-        if (result.Succeeded)
-        {
-            string stripeCustomerId = _stripeIntegrationService.RegisterNewStripeUser(user.Email);
-            user.StripeCustomerId = stripeCustomerId;
-            _dbContext.Users.Update(user);
-            await _dbContext.SaveChangesAsync();
-        }
         return result;
     }
 }
