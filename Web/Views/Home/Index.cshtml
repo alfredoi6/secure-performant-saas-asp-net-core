@@ -1,8 +1,25 @@
-﻿@{
+﻿@model TenantInfo
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    @if (Model != null)
+    {
+        <div>
+            <strong>Tenant ID:</strong> @Model.TenantId
+        </div>
+        <div>
+            <strong>Tenant Name:</strong> @Model.TenantName
+        </div>
+        <div>
+            <strong>User ID:</strong> @Model.UserId
+        </div>
+    }
+    else
+    {
+        <p>No Tenant/User info found.</p>
+    }
 </div>

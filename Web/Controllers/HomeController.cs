@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Web.Factories;
 using Web.Models;
 
 namespace Web.Controllers
@@ -15,7 +16,18 @@ namespace Web.Controllers
 
         public IActionResult Index()
         {
-            return View();
+	        var tenantId = User.FindFirst(TenantClaimTypes.TenantId)?.Value;
+	        var tenantName = User.FindFirst(TenantClaimTypes.TenantName)?.Value;
+	        var userId = User.FindFirst(TenantClaimTypes.UserId)?.Value;
+
+	        var info = new TenantInfo
+	        {
+		        TenantId = tenantId,
+		        TenantName = tenantName,
+		        UserId = userId
+	        };
+
+            return View(info);
         }
 
         public IActionResult Privacy()
